@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 
 app = flask.Flask('app')
 PG_DSN = 'postgresql://admin:1234@127.0.0.1:5432/advdb'
-engine = create_engine(PG_DSN)
+engine = create_engine(PG_DSN, encoding='utf8')
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 
@@ -25,8 +25,14 @@ Base.metadata.create_all(engine)
 
 
 class AdvView(MethodView):
-    def get(self):
-        ...
+    def get(self, adv_id):
+        with Session() as session:
+            selected_adv = session.query(AdvModel).filter_by(id=adv_id).first()
+            adv_dict = {'id': selected_adv.id, 'head': selected_adv.head, 'description': selected_adv.description,
+                        'owner': selected_adv.owner, 'create_date': selected_adv.create_date}
+            print(flask.jsonify(adv_dict).content_encoding)
+        return flask.jsonify(adv_dict)
+
 
     def post(self):
         new_adv_data = request.json
@@ -41,8 +47,6 @@ class AdvView(MethodView):
         ...
 
 
-methods = ['POST', 'GET', 'DELETE']
-
-
-app.add_url_rule('/adv/', view_func=AdvView.as_view('create_adv'), methods=methods)
+app.add_url_rule('/adv/', view_func=AdvView.as_view('create_adv'), methods=['POST'])
+app.add_url_rule('/adv/<int:adv_id>/', view_func=AdvView.as_view('get_adv'), methods=['GET'])
 
