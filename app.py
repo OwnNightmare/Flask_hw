@@ -27,12 +27,11 @@ Base.metadata.create_all(engine)
 class AdvView(MethodView):
     def get(self, adv_id):
         with Session() as session:
-            selected_adv = session.query(AdvModel).filter_by(id=adv_id).first()
-            adv_dict = {'id': selected_adv.id, 'head': selected_adv.head, 'description': selected_adv.description,
-                        'owner': selected_adv.owner, 'create_date': selected_adv.create_date}
-            print(flask.jsonify(adv_dict).content_encoding)
+            # selected_adv = session.query(AdvModel).filter_by(id=adv_id).first()
+            one_adv = session.get(AdvModel, adv_id)
+            adv_dict = {'id': one_adv.id, 'head': one_adv.head, 'description': one_adv.description,
+                        'owner': one_adv.owner, 'create_date': one_adv.create_date}
         return flask.jsonify(adv_dict)
-
 
     def post(self):
         new_adv_data = request.json
@@ -43,10 +42,16 @@ class AdvView(MethodView):
             session.commit()
             return flask.jsonify({'adv': new_adv.head})
 
-    def delete(self):
-        ...
+    def delete(self, adv_id):
+        with Session() as session:
+            deleting_adv = (session.query(AdvModel).filter_by(id=adv_id)).first()
+            if deleting_adv:
+                session.delete(deleting_adv)
+                session.commit()
+                return flask.jsonify(f'Advertisement "{deleting_adv.head}" was successfully deleted')
 
 
-app.add_url_rule('/adv/', view_func=AdvView.as_view('create_adv'), methods=['POST'])
-app.add_url_rule('/adv/<int:adv_id>/', view_func=AdvView.as_view('get_adv'), methods=['GET'])
+app.add_url_rule('/post/', view_func=AdvView.as_view('create_adv'), methods=['POST'])
+app.add_url_rule('/get/<int:adv_id>/', view_func=AdvView.as_view('get_adv'), methods=['GET'])
+app.add_url_rule('/delete/<int:adv_id>/', view_func=AdvView.as_view('delete_adv'), methods=['DELETE'])
 
