@@ -1,3 +1,5 @@
+import werkzeug
+from fastapi import HTTPException
 import flask
 from flask import request
 from flask.views import MethodView
@@ -29,6 +31,10 @@ class AdvView(MethodView):
         with Session() as session:
             # selected_adv = session.query(AdvModel).filter_by(id=adv_id).first()
             one_adv = session.get(AdvModel, adv_id)
+            if not one_adv:
+                response = flask.jsonify({"error": f'Adv with id {adv_id} was not found'})
+                response.status_code = 404
+                return response
             adv_dict = {'id': one_adv.id, 'head': one_adv.head, 'description': one_adv.description,
                         'owner': one_adv.owner, 'create_date': one_adv.create_date}
         return flask.jsonify(adv_dict)
@@ -45,10 +51,13 @@ class AdvView(MethodView):
     def delete(self, adv_id):
         with Session() as session:
             deleting_adv = (session.query(AdvModel).filter_by(id=adv_id)).first()
-            if deleting_adv:
-                session.delete(deleting_adv)
-                session.commit()
-                return flask.jsonify(f'Advertisement "{deleting_adv.head}" was successfully deleted')
+            if not deleting_adv:
+                response = flask.jsonify({"error": f'Adv with id {adv_id} was not found - nothing to delete.'})
+                response.status_code = 404
+                return response
+            session.delete(deleting_adv)
+            session.commit()
+            return flask.jsonify(f'Advertisement "{deleting_adv.head}" was successfully deleted')
 
 
 app.add_url_rule('/post/', view_func=AdvView.as_view('create_adv'), methods=['POST'])
