@@ -63,4 +63,3 @@ class AdvView(MethodView):
 app.add_url_rule('/post/', view_func=AdvView.as_view('create_adv'), methods=['POST'])
 app.add_url_rule('/get/<int:adv_id>/', view_func=AdvView.as_view('get_adv'), methods=['GET'])
 app.add_url_rule('/delete/<int:adv_id>/', view_func=AdvView.as_view('delete_adv'), methods=['DELETE'])
-
